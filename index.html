@@ -1,34 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
-    <script src="./ballParabola.js"></script>
     <script src="ajax.js"></script>
     <script src="vue.js"></script>
-    
-</head>
-<body>
-   <div id="app">
 
-    
+</head>
+
+<body>
+    <div id="app">
+
+
         <div class="container">
-                <!-- <transition 
-                @before-enter="beforeEnter"
-                @enter="enter" 
-                @after-enter="afterEnter">
-                    <div v-if="showBall" class="ball"></div>
-                </transition> -->
+
             <div class="good-list">
                 <ul>
                     <li v-for="g in shops">
                         <div>{{g.name}}</div>
                         <div>{{g.price}}</div>
                         <div>
-                            <span class="add-btn"  @click="addToCart(g.id)">+</span>
+                            <span class="add-btn" @click="addToCart(g.id)">+</span>
                         </div>
                     </li>
                 </ul>
@@ -39,15 +35,29 @@
                 <h2>总价：{{totalPrice}}</h2>
             </div>
 
-            <transition name="move"> 
+            <div class="ball-container">
+                <!--小球-->
+                <div v-for="ball in balls">
+                    <transition name="drop" @before-enter="beforeDrop" @enter="dropping" @after-enter="afterDrop">
+                        <div class="ball" v-show="ball.show">
+                            <div class="inner inner-hook"></div>
+                        </div>
+                    </transition>
+                </div>
+            </div>
+
+
+            <transition name="move">
                 <div class="cart-list" v-show="show">
                     <ul>
                         <li v-for="c in cartList">
-                            <div><p>{{c.name}}</p></div>
+                            <div>
+                                <p>{{c.name}}</p>
+                            </div>
                             <div style="text-align: center;">{{c.price*c.num}}</div>
                             <div>
                                 <div class="cart-contr">
-                                    <div class="btn" @click="decrease(c.id)">-</div> 
+                                    <div class="btn" @click="decrease(c.id)">-</div>
                                     <div>{{c.num}}</div>
                                     <div class="btn" @click="increase(c.id)">+</div>
                                 </div>
@@ -56,85 +66,137 @@
                     </ul>
                 </div>
             </transition>
-            
+
             <transition name="fade">
                 <div class="gray-cover" v-show="show" @click="show=false"></div>
             </transition>
-            
+
         </div>
-   </div>
+    </div>
     <script>
-    new Vue({
-        el:"#app",
-        data:{
-            showBall:false,
-            show:false,
-            shops:[],
-            cartList:[]
-        },
-        computed: {
-            totalNum(){
-                return this.cartList.length
+        new Vue({
+            el: "#app",
+            data: {
+                showBall: false,
+                show: false,
+                shops: [],
+                cartList: [],
+                balls: [ //小球 设为3个
+   					{
+   						show: false
+   					},
+   					{
+   						show: false
+   					},
+   					{
+   						show: false
+   					},
+   				],
+   				dropBalls: [],
             },
-            totalPrice(){
-                let count = 0;
-                for(let i = 0;i < this.cartList.length;i++){
-                    let good = this.cartList[i];
-                    count += good.price * good.num;
+            computed: {
+                totalNum() {
+                    return this.cartList.length
+                },
+                totalPrice() {
+                    let count = 0;
+                    for (let i = 0; i < this.cartList.length; i++) {
+                        let good = this.cartList[i];
+                        count += good.price * good.num;
+                    }
+                    return count;
                 }
-                return count;
-            }
-        },
-        mounted() {
-            ajax("./shop.json")
-            .then((result) => {
-                this.shops = JSON.parse(result).goods
-            }).catch((err) => {
-            });
-        },
-        methods: {
-            addToCart(id){
-               
-                // this.showBall = !this.showBall;
-                let cartGood = this.cartList.find(function(item){
-                    return item.id === id
-                })
-                if(cartGood){
-                    cartGood.num++
-                }else{
-                    let good = this.shops.find(function(item){
+            },
+            mounted() {
+                ajax("./shop.json")
+                    .then((result) => {
+                        this.shops = JSON.parse(result).goods
+                    }).catch((err) => {});
+            },
+            methods: {
+                addToCart(id) {
+
+                    this.drop(event.target);
+                    this.count++;
+
+                    // this.showBall = !this.showBall;
+                    let cartGood = this.cartList.find(function (item) {
                         return item.id === id
                     })
-                    good.num = 1;
-                    this.cartList.push(good)
+                    if (cartGood) {
+                        cartGood.num++
+                    } else {
+                        let good = this.shops.find(function (item) {
+                            return item.id === id
+                        })
+                        good.num = 1;
+                        this.cartList.push(good)
+                    }
+                },
+                decrease(id) {
+                    let good = this.cartList.find(item => item.id === id);
+                    //   判断数量是否大于1，大于1则减一，否则直接从数组中移除
+                    if (good.num > 1) {
+                        good.num--
+                    } else {
+                        this.cartList = this.cartList.filter(item => item.id != id)
+                    }
+                },
+                increase(id) {
+                    let good = this.cartList.find(item => item.id === id);
+                    good.num++;
+                },
+                drop(el) { //抛物
+                    for (let i = 0; i < this.balls.length; i++) {
+                        let ball = this.balls[i];
+                        if (!ball.show) {
+                            ball.show = true;
+                            ball.el = el;
+                            this.dropBalls.push(ball);
+                            return;
+                        }
+                    }
+                },
+                beforeDrop(el) {
+                    /* 购物车小球动画实现 */
+                    let count = this.balls.length;
+                    while (count--) {
+                        let ball = this.balls[count];
+                        if (ball.show) {
+                            let rect = ball.el.getBoundingClientRect(); //元素相对于视口的位置
+                            let x = rect.left - 32;
+                            let y = -(window.innerHeight - rect.top - 22); //获取y
+                            el.style.display = '';
+                            el.style.webkitTransform = 'translateY(' + y + 'px)'; //translateY
+                            el.style.transform = 'translateY(' + y + 'px)';
+                            let inner = el.getElementsByClassName('inner-hook')[0];
+                            inner.style.webkitTransform = 'translateX(' + x + 'px)';
+                            inner.style.transform = 'translateX(' + x + 'px)';
+                        }
+                    }
+                },
+                dropping(el, done) {
+                    /*重置小球数量  样式重置*/
+                    let rf = el.offsetHeight;
+                    el.style.webkitTransform = 'translate3d(0,0,0)';
+                    el.style.transform = 'translate3d(0,0,0)';
+                    let inner = el.getElementsByClassName('inner-hook')[0];
+                    inner.style.webkitTransform = 'translate3d(0,0,0)';
+                    inner.style.transform = 'translate3d(0,0,0)';
+                    el.addEventListener('transitionend', done);
+                },
+                afterDrop(el) {
+                    /*初始化小球*/
+                    let ball = this.dropBalls.shift();
+                    if (ball) {
+                        ball.show = false;
+                        el.style.display = 'none';
+                    }
                 }
             },
-            decrease(id){
-                let good = this.cartList.find(item => item.id === id);
-            //   判断数量是否大于1，大于1则减一，否则直接从数组中移除
-                if(good.num >1){
-                    good.num--
-                }else{
-                    this.cartList = this.cartList.filter(item => item.id != id)
-                }
-            },
-            increase(id){
-                let good = this.cartList.find(item => item.id === id);
-                good.num++;
-            },
-            beforeEnter(el){
-                el.style.transform ="translate(300px)";
-            },
-            enter(el, done) {
-                
-            },
-            afterEnter(el) {
-                el.style.opacity = 0;
-                this.showBall = false;
-            }
-        },
 
-    })
+        })
     </script>
 </body>
+
 </html>
