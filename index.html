@@ -5,10 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="./ballParabola.js"></script>
+    <script src="ajax.js"></script>
+    <script src="vue.js"></script>
+    
 </head>
 <body>
-    <h1>  购物车</h1>
+   <div id="app">
 
-    <h1> 这是master分支上添加的代码 </h1>
+    
+        <div class="container">
+                <!-- <transition 
+                @before-enter="beforeEnter"
+                @enter="enter" 
+                @after-enter="afterEnter">
+                    <div v-if="showBall" class="ball"></div>
+                </transition> -->
+            <div class="good-list">
+                <ul>
+                    <li v-for="g in shops">
+                        <div>{{g.name}}</div>
+                        <div>{{g.price}}</div>
+                        <div>
+                            <span class="add-btn"  @click="addToCart(g.id)">+</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="cart-bar" @click="show=!show">
+                <div class="cart-icon">{{totalNum}}</div>
+                <h2>总价：{{totalPrice}}</h2>
+            </div>
+
+            <transition name="move"> 
+                <div class="cart-list" v-show="show">
+                    <ul>
+                        <li v-for="c in cartList">
+                            <div><p>{{c.name}}</p></div>
+                            <div style="text-align: center;">{{c.price*c.num}}</div>
+                            <div>
+                                <div class="cart-contr">
+                                    <div class="btn" @click="decrease(c.id)">-</div> 
+                                    <div>{{c.num}}</div>
+                                    <div class="btn" @click="increase(c.id)">+</div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </transition>
+            
+            <transition name="fade">
+                <div class="gray-cover" v-show="show" @click="show=false"></div>
+            </transition>
+            
+        </div>
+   </div>
+    <script>
+    new Vue({
+        el:"#app",
+        data:{
+            showBall:false,
+            show:false,
+            shops:[],
+            cartList:[]
+        },
+        computed: {
+            totalNum(){
+                return this.cartList.length
+            },
+            totalPrice(){
+                let count = 0;
+                for(let i = 0;i < this.cartList.length;i++){
+                    let good = this.cartList[i];
+                    count += good.price * good.num;
+                }
+                return count;
+            }
+        },
+        mounted() {
+            ajax("./shop.json")
+            .then((result) => {
+                this.shops = JSON.parse(result).goods
+            }).catch((err) => {
+            });
+        },
+        methods: {
+            addToCart(id){
+               
+                // this.showBall = !this.showBall;
+                let cartGood = this.cartList.find(function(item){
+                    return item.id === id
+                })
+                if(cartGood){
+                    cartGood.num++
+                }else{
+                    let good = this.shops.find(function(item){
+                        return item.id === id
+                    })
+                    good.num = 1;
+                    this.cartList.push(good)
+                }
+            },
+            decrease(id){
+                let good = this.cartList.find(item => item.id === id);
+            //   判断数量是否大于1，大于1则减一，否则直接从数组中移除
+                if(good.num >1){
+                    good.num--
+                }else{
+                    this.cartList = this.cartList.filter(item => item.id != id)
+                }
+            },
+            increase(id){
+                let good = this.cartList.find(item => item.id === id);
+                good.num++;
+            },
+            beforeEnter(el){
+                el.style.transform ="translate(300px)";
+            },
+            enter(el, done) {
+                
+            },
+            afterEnter(el) {
+                el.style.opacity = 0;
+                this.showBall = false;
+            }
+        },
+
+    })
+    </script>
 </body>
 </html>

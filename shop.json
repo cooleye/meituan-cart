@@ -1,0 +1,40 @@
+{
+    "goods":[
+        {
+            "id":0,
+            "name":"冰雪1",
+            "price":22,
+            "num":0,
+            "selected":false
+        },
+        {
+            "id":1,
+            "name":"冰雪2",
+            "price":220,
+            "num":0,
+            "selected":false
+        },
+        {
+            "id":2,
+            "name":"安格斯",
+            "price":242,
+            "num":0,
+            "selected":false
+        },
+        {
+            "id":3,
+            "name":"多人",
+            "price":12,
+            "num":0,
+            "selected":false
+        },
+        {
+            "id":4,
+            "name":"早餐主食",
+            "price":42,
+            "num":0,
+            "selected":false
+        }
+
+    ]
+}
